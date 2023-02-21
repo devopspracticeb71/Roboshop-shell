@@ -2,11 +2,12 @@
 
 ##### Change these values ###
 ZONE_ID="Z0039172FSTR3JJ41ZD9"
+DOMAIN="devops-71.online"
 SG_NAME="allow-all"
-#ENV="dev"
+env=dev
 #############################
 
-env=dev
+
 
 create_ec2() {
   PRIVATE_IP=$(aws ec2 run-instances \
