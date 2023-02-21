@@ -4,23 +4,30 @@
 ZONE_ID="Z0039172FSTR3JJ41ZD9"
 DOMAIN="devops-71.online"
 SG_NAME="allow-all"
-env=dev
 #############################
 
 
 
 create_ec2() {
+  echo -e '#!/bin/bash' >/tmp/user-data
+  echo -e "\nset-hostname ${COMPONENT}" >>/tmp/user-data
   PRIVATE_IP=$(aws ec2 run-instances \
       --image-id ${AMI_ID} \
       --instance-type t3.micro \
       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${COMPONENT}}, {Key=Monitor,Value=yes}]" "ResourceType=spot-instances-request,Tags=[{Key=Name,Value=${COMPONENT}}]"  \
       --instance-market-options "MarketType=spot,SpotOptions={SpotInstanceType=persistent,InstanceInterruptionBehavior=stop}"\
       --security-group-ids ${SGID} \
-      --iam-instance-profile Name=aws_ssm_dev_role \
+      --user-data file:///tmp/user-data \
       | jq '.Instances[].PrivateIpAddress' | sed -e 's/"//g')
 
-  sed -e "s/IPADDRESS/${PRIVATE_IP}/" -e "s/COMPONENT/${COMPONENT}/" route53.json >/tmp/record.json
-  aws route53 change-resource-record-sets --hosted-zone-id ${ZONE_ID} --change-batch file:///tmp/record.json | jq
+  sed -e "s/IPADDRESS/${PRIVATE_IP}/" -e "s/COMPONENT/${COMPONENT}/" -e "s/DOMAIN/${DOMAIN}/" route53.json >/tmp/record.json
+  aws route53 change-resource-record-sets --hosted-zone-id ${ZONE_ID} --change-batch file:///tmp/record.json 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "Server Created - SUCCESS - DNS RECORD - ${COMPONENT}.${DOMAIN}"
+  else
+     echo "Server Created - FAILED - DNS RECORD - ${COMPONENT}.${DOMAIN}"
+     exit 1
+  fi
 }
 
 
@@ -39,6 +46,6 @@ fi
 
 
 for component in catalogue cart user shipping payment frontend mongodb mysql rabbitmq redis dispatch; do
-  COMPONENT="${env}-${component}"
+  COMPONENT="${component}"
   create_ec2
 done
