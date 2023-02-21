@@ -4,7 +4,6 @@
 ZONE_ID="Z0039172FSTR3JJ41ZD9"
 DOMAIN="devops-71.online"
 SG_NAME="allow-all"
-env=dev
 #############################
 
 
