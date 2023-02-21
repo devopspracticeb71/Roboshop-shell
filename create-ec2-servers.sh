@@ -3,6 +3,7 @@
 ##### Change these values ###
 ZONE_ID="Z0039172FSTR3JJ41ZD9"
 SG_NAME="allow-all"
+#ENV="dev"
 #############################
 
 env=dev
@@ -37,6 +38,6 @@ fi
 
 
 for component in catalogue cart user shipping payment frontend mongodb mysql rabbitmq redis dispatch; do
-  COMPONENT="${component}"
+  COMPONENT="${env}-${component}"
   create_ec2
 done
